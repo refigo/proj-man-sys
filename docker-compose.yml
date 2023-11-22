@@ -1,0 +1,51 @@
+version: '3.9'
+
+volumes:
+  postgres: {}
+
+services:
+  database:
+    container_name: proj-man-sys-postgres
+    image: postgres:14-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASS}
+    networks:
+      - mynetwork
+    ports:
+      - '5432:5432'
+    volumes:
+      - './postgres:/var/lib/postgresql/data'
+      
+  nest-app:
+    container_name: proj-man-sys-nestjs
+    build:
+      context: .
+      dockerfile: docker/local.Dockerfile
+    ports:
+    # app port
+      - '3000:3000'
+    # debugging port
+      - '9229:9229'
+    volumes:
+      - .:/usr/src/app
+    # npm run start
+    # npm run start:debug -> this is debugging mode
+    command: sleep infinite
+    depends_on:
+      - database
+    networks:
+      - mynetwork
+    environment:
+      DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_USER: ${DATABASE_USER}
+      DATABASE_PASS: ${DATABASE_PASS}
+      DATABASE_HOST: ${DATABASE_HOST}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN}
+
+networks:
+  mynetwork:
